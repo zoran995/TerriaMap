@@ -18,6 +18,7 @@ var configuration = {
 import GoogleAnalytics from 'terriajs/lib/Core/GoogleAnalytics';
 import ShareDataService from 'terriajs/lib/Models/ShareDataService';
 import OgrCatalogItem from 'terriajs/lib/Models/OgrCatalogItem';
+import knockout from 'terriajs-cesium/Source/ThirdParty/knockout';
 import raiseErrorToUser from 'terriajs/lib/Models/raiseErrorToUser';
 import registerAnalytics from 'terriajs/lib/Models/registerAnalytics';
 import registerCatalogMembers from 'terriajs/lib/Models/registerCatalogMembers';
@@ -45,6 +46,17 @@ terriaOptions.analytics = new GoogleAnalytics();
 
 // Construct the TerriaJS application, arrange to show errors to the user, and start it up.
 var terria = new Terria(terriaOptions);
+
+const originalAddInitSource = terria.addInitSource;
+terria.addInitSource = function(initSource) {
+    const promise = originalAddInitSource.apply(this, arguments);
+    
+    if (initSource.brandBarElements) {
+        this.configParameters.brandBarElements = initSource.brandBarElements;
+    }
+
+    return promise;
+};
 
 // Register custom components in the core TerriaJS.  If you only want to register a subset of them, or to add your own,
 // insert your custom version of the code in the registerCustomComponentTypes function here instead.
@@ -80,6 +92,8 @@ terria.start({
 }).always(function() {
 
     try {
+        knockout.track(terria.configParameters, ['brandBarElements']);
+
         configuration.bingMapsKey = terria.configParameters.bingMapsKey ? terria.configParameters.bingMapsKey : configuration.bingMapsKey;
 
         viewState.searchState.locationSearchProviders = [
